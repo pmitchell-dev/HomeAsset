@@ -159,6 +159,16 @@ async function navigate(route, param = null) {
   setActiveNav(route);
   highlightSidebarLocation();
   closeSidebar();
+
+  const qs = document.getElementById('quick-search');
+  if (qs) {
+    if (route !== 'search') {
+      qs.value = '';
+    } else if (param !== null) {
+      qs.value = param;
+    }
+  }
+
   const main = document.getElementById('main-content');
   main.innerHTML = '<div class="loader"><div class="spinner"></div> Loading…</div>';
   try {
@@ -167,7 +177,7 @@ async function navigate(route, param = null) {
       case 'locations':  await renderLocations(); break;
       case 'location':   await renderLocationDetail(param); break;
       case 'items':      await renderItems(param || {}); break;
-      case 'search':     await renderSearch(); break;
+      case 'search':     await renderSearch(param || ''); break;
       case 'settings':   await renderSettings(); break;
       default:           await renderDashboard();
     }
@@ -197,11 +207,13 @@ let _qsTimer;
 function onQuickSearch(val) {
   clearTimeout(_qsTimer);
   _qsTimer = setTimeout(() => {
-    navigate('search');
-    setTimeout(() => {
-      const si = document.getElementById('search-input-big');
-      if (si) { si.value = val; si.dispatchEvent(new Event('input')); }
-    }, 50);
+    const si = document.getElementById('search-input-big');
+    if (S.route === 'search' && si) {
+      si.value = val;
+      doSearch();
+    } else {
+      navigate('search', val);
+    }
   }, 200);
 }
 

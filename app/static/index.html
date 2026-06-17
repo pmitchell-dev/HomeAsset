@@ -55,7 +55,7 @@
     <div class="topbar-search">
       <span class="topbar-search-icon">🔍</span>
       <input type="text" id="quick-search" placeholder="Quick search…" autocomplete="off"
-             oninput="onQuickSearch(this.value)" onfocus="navigate('search')" />
+             oninput="onQuickSearch(this.value)" onfocus="if(S.route !== 'search') navigate('search')" />
     </div>
     <div class="topbar-right">
       <button class="btn btn-primary" id="btn-add-item" onclick="openAddItemModal()">+ Add Item</button>

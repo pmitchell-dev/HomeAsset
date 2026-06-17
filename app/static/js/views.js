@@ -176,15 +176,20 @@ function doSearch() {
   clearTimeout(_searchTimer);
   _searchTimer = setTimeout(async () => {
     const q = document.getElementById('search-input-big')?.value?.trim() || '';
+    
+    // Keep top search box in sync
+    const qs = document.getElementById('quick-search');
+    if (qs) qs.value = q;
+
     const catId = window._searchSelectedCategory;
     if (!q && !catId) {
       document.getElementById('search-results').innerHTML = '';
       return;
     }
-    let qs = [];
-    if (q) qs.push(`q=${encodeURIComponent(q)}`);
-    if (catId) qs.push(`category_id=${catId}`);
-    const items = await api.get('/search?' + qs.join('&'));
+    let qsParams = [];
+    if (q) qsParams.push(`q=${encodeURIComponent(q)}`);
+    if (catId) qsParams.push(`category_id=${catId}`);
+    const items = await api.get('/search?' + qsParams.join('&'));
     const el = document.getElementById('search-results');
     if (!el) return;
     el.innerHTML = items.length
