@@ -442,7 +442,7 @@ INSTRUCTIONS:
 5. Provide a set of relevant `suggested_tags` (lower-case keywords, e.g. ["usb", "flash-drive", "sd-card", "storage", "tools"]).
 6. Provide `notes` if helpful (e.g. estimated item count, observed brands, condition, or maintenance suggestions).
 7. Extract or deduce `serial_number` and `model_number` if visible in image or notes (or null if not applicable).
-8. Provide relevant `suggested_custom_fields` as key-value pairs (e.g. {"key": "Estimated Item Count", "value": "13"}, {"key": "Item Types", "value": "USB Drives, SD Cards"}).
+8. Provide relevant `suggested_custom_fields` as key-value pairs (e.g. {{"key": "Estimated Item Count", "value": "13"}}, {{"key": "Item Types", "value": "USB Drives, SD Cards"}}).
 
 Return ONLY a JSON object with these exact keys:
 {{
