@@ -195,6 +195,9 @@ img { max-width: 100%; }
 }
 .btn-primary { background: var(--primary); color: #fff; }
 .btn-primary:hover { background: var(--primary-h); box-shadow: 0 0 16px rgba(99,102,241,0.4); }
+.btn-ai { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); color: #fff; border: none; box-shadow: 0 0 12px rgba(139,92,246,0.35); }
+.btn-ai:hover { background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%); box-shadow: 0 0 18px rgba(139,92,246,0.6); }
+.btn-ai:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(30%); }
 .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
 .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text-1); }
 .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }

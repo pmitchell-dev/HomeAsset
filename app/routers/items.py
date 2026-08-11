@@ -8,8 +8,11 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 from ..database import get_db
-from ..models import Item, Tag, CustomField, Document
-from ..schemas import ItemCreate, ItemUpdate, ItemSummary, ItemDetail, DocumentResponse
+from ..models import Item, Tag, CustomField, Document, Location, Category
+from ..schemas import (
+    ItemCreate, ItemUpdate, ItemSummary, ItemDetail, DocumentResponse,
+    ItemAIAutofillRequest, ItemAIAutofillResponse, CustomFieldCreate
+)
 
 router = APIRouter()
 
@@ -378,5 +381,151 @@ def delete_document(item_id: int, doc_id: int, db: Session = Depends(get_db)):
     db.delete(doc)
     db.commit()
     return {"ok": True}
+
+
+# ── AI Autofill Endpoint ──────────────────────────────────────────────────────
+
+@router.post("/ai-autofill", response_model=ItemAIAutofillResponse)
+def ai_autofill_item(payload: ItemAIAutofillRequest, db: Session = Depends(get_db)):
+    import json
+    import re
+    import urllib.request
+    import urllib.error
+
+    locations = db.query(Location).all()
+    categories = db.query(Category).all()
+
+    locations_list = [{"id": l.id, "name": l.name} for l in locations]
+    categories_list = [{"id": c.id, "name": c.name} for c in categories]
+
+    system_instruction = (
+        "You are an intelligent inventory management assistant for HomeAsset. "
+        "Analyze the provided item details (and image if present) to complete missing inventory information. "
+        "Respond ONLY with a valid JSON object matching the requested schema."
+    )
+
+    existing_info = {
+        "name": payload.name or "",
+        "description": payload.description or "",
+        "location_id": payload.location_id,
+        "category_id": payload.category_id,
+        "serial_number": payload.serial_number or "",
+        "model_number": payload.model_number or "",
+        "notes": payload.notes or "",
+        "tags": payload.tags,
+        "custom_fields": [{"key": cf.key, "value": cf.value} for cf in payload.custom_fields],
+    }
+
+    user_prompt = f"""
+Analyze this item and finish filling in any missing or helpful information.
+
+Current Item Information:
+{json.dumps(existing_info, indent=2)}
+
+Available System Categories (pick closest category_id if appropriate, or null):
+{json.dumps(categories_list, indent=2)}
+
+Available System Locations (pick closest location_id if appropriate, or null):
+{json.dumps(locations_list, indent=2)}
+
+IMAGE ATTACHMENT:
+{"An image of the item is attached as base64 below." if payload.image_base64 else "No image attached."}
+{payload.image_base64 or ""}
+
+INSTRUCTIONS:
+1. Provide a clear, accurate, and concise item `name` if currently blank or incomplete.
+2. Provide a detailed `description` explaining what the item is, what it is used for, and key features.
+3. Select the best `category_id` from the list of Available System Categories if possible, or null.
+4. Select the best `location_id` from the list of Available System Locations if possible, or null.
+5. Provide a set of relevant `suggested_tags` (lower-case keywords, e.g. ["tools", "cordless", "dewalt"]).
+6. Provide `notes` if helpful (e.g. usage tips, maintenance suggestions, or missing specs).
+7. Extract or deduce `serial_number` and `model_number` if visible in image or notes.
+8. Provide relevant `suggested_custom_fields` as key-value pairs (e.g. Brand, Color, Power, Warranty, Condition, etc.).
+
+Return ONLY a JSON object with these exact keys:
+{{
+  "name": string,
+  "description": string,
+  "category_id": integer or null,
+  "location_id": integer or null,
+  "notes": string,
+  "serial_number": string,
+  "model_number": string,
+  "suggested_tags": [string],
+  "suggested_custom_fields": [{{"key": string, "value": string}}]
+}}
+"""
+
+    gemini_payload = {
+        "prompt": user_prompt,
+        "model": "gemini-2.5-flash",
+        "system_instruction": system_instruction,
+    }
+
+    service_url = "http://192.168.50.217:5050/api/query"
+
+    try:
+        req = urllib.request.Request(
+            service_url,
+            data=json.dumps(gemini_payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=30) as response:
+            res_body = json.loads(response.read().decode("utf-8"))
+
+        if res_body.get("status") != "success":
+            msg = res_body.get("message", "Error from Gemini backend service.")
+            raise HTTPException(status_code=400, detail=msg)
+
+        raw_result = res_body.get("result", "")
+        json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw_result, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(1)
+        else:
+            json_str = raw_result.strip()
+
+        data = json.loads(json_str)
+
+        custom_fields = [
+            CustomFieldCreate(key=cf.get("key", "").strip(), value=str(cf.get("value", "")).strip())
+            for cf in data.get("suggested_custom_fields", [])
+            if cf.get("key")
+        ]
+
+        return ItemAIAutofillResponse(
+            name=data.get("name") or payload.name,
+            description=data.get("description") or payload.description,
+            location_id=data.get("location_id") or payload.location_id,
+            category_id=data.get("category_id") or payload.category_id,
+            notes=data.get("notes") or payload.notes,
+            serial_number=data.get("serial_number") or payload.serial_number,
+            model_number=data.get("model_number") or payload.model_number,
+            suggested_tags=data.get("suggested_tags") or [],
+            suggested_custom_fields=custom_fields,
+        )
+
+    except urllib.error.HTTPError as e:
+        error_text = e.read().decode("utf-8")
+        try:
+            err_json = json.loads(error_text)
+            err_msg = err_json.get("message", error_text)
+        except Exception:
+            err_msg = error_text
+        raise HTTPException(status_code=500, detail=f"Gemini Service Error: {err_msg}")
+    except urllib.error.URLError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Cannot reach Gemini API service at {service_url}: {e.reason}",
+        )
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to parse AI response as valid JSON format.",
+        )
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"AI Autofill error: {str(e)}")
+
 
 

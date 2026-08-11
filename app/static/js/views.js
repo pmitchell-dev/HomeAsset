@@ -626,6 +626,9 @@ function _showItemForm(item, prefillLocId) {
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-ai" id="btn-finish-ai" onclick="finishWithAI(${editing?item.id:'null'})">
+        ✨ Finish with AI
+      </button>
       <button class="btn btn-primary" onclick="saveItem(${editing?item.id:'null'})">
         ${editing ? 'Save Changes' : 'Create Item'}
       </button>
@@ -806,6 +809,128 @@ async function saveItem(id) {
     await loadSidebarTree();
     navigate(S.route, S.routeParam);
   } catch(e) { toast(e.message, 'error'); }
+}
+
+async function finishWithAI(editingItemId = null) {
+  const btn = document.getElementById('btn-finish-ai');
+  if (!btn) return;
+
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `✨ Analyzing...`;
+
+  try {
+    let imageBase64 = null;
+    if (window._pendingItemImage) {
+      imageBase64 = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(window._pendingItemImage);
+      });
+    } else {
+      const previewImg = document.getElementById('item-form-img-preview');
+      if (previewImg && previewImg.src && previewImg.style.display !== 'none') {
+        if (previewImg.src.startsWith('data:image')) {
+          imageBase64 = previewImg.src;
+        }
+      }
+    }
+
+    const nameEl = document.getElementById('if-name');
+    const descEl = document.getElementById('if-desc');
+    const locEl = document.getElementById('if-loc');
+    const catEl = document.getElementById('if-cat');
+    const serialEl = document.getElementById('if-serial');
+    const modelEl = document.getElementById('if-model');
+    const notesEl = document.getElementById('if-notes');
+
+    const cfs = [];
+    document.querySelectorAll('.custom-field-row').forEach((row) => {
+      const k = row.querySelector('[id^="cf-key-"]')?.value?.trim();
+      const v = row.querySelector('[id^="cf-val-"]')?.value?.trim();
+      if (k) cfs.push({ key: k, value: v || null });
+    });
+
+    const payload = {
+      name: nameEl?.value?.trim() || null,
+      description: descEl?.value?.trim() || null,
+      location_id: parseInt(locEl?.value) || null,
+      category_id: parseInt(catEl?.value) || null,
+      serial_number: serialEl?.value?.trim() || null,
+      model_number: modelEl?.value?.trim() || null,
+      notes: notesEl?.value?.trim() || null,
+      tags: (window._itemFormTags || []).map(t => t.name),
+      custom_fields: cfs,
+      image_base64: imageBase64,
+    };
+
+    const result = await api.post('/items/ai-autofill', payload);
+
+    if (result.name && (!nameEl.value.trim() || nameEl.value.trim() !== result.name)) {
+      nameEl.value = result.name;
+    }
+    if (result.description && (!descEl.value.trim() || descEl.value.trim().length < (result.description || '').length)) {
+      descEl.value = result.description;
+    }
+    if (result.category_id && !catEl.value) {
+      catEl.value = result.category_id;
+    }
+    if (result.location_id && !locEl.value) {
+      locEl.value = result.location_id;
+    }
+    if (result.serial_number && !serialEl.value.trim()) {
+      serialEl.value = result.serial_number;
+    }
+    if (result.model_number && !modelEl.value.trim()) {
+      modelEl.value = result.model_number;
+    }
+    if (result.notes && (!notesEl.value.trim() || notesEl.value.trim().length < (result.notes || '').length)) {
+      notesEl.value = result.notes;
+    }
+
+    if (result.suggested_tags && Array.isArray(result.suggested_tags)) {
+      for (const tagName of result.suggested_tags) {
+        const cleanTag = tagName.trim().toLowerCase();
+        if (!cleanTag) continue;
+        const match = S.tags.find(t => t.name.toLowerCase() === cleanTag);
+        if (match) {
+          addItemFormTag(match.id, match.name);
+        } else {
+          await createAndAddTag(cleanTag);
+        }
+      }
+    }
+
+    if (result.suggested_custom_fields && Array.isArray(result.suggested_custom_fields)) {
+      const existingKeys = new Set(
+        Array.from(document.querySelectorAll('.custom-field-row'))
+          .map(r => r.querySelector('[id^="cf-key-"]')?.value?.trim().toLowerCase())
+          .filter(Boolean)
+      );
+
+      result.suggested_custom_fields.forEach((scf) => {
+        if (scf.key && !existingKeys.has(scf.key.toLowerCase())) {
+          addCfRow();
+          const rows = document.querySelectorAll('.custom-field-row');
+          const lastRow = rows[rows.length - 1];
+          if (lastRow) {
+            const kInput = lastRow.querySelector('[id^="cf-key-"]');
+            const vInput = lastRow.querySelector('[id^="cf-val-"]');
+            if (kInput) kInput.value = scf.key;
+            if (vInput) vInput.value = scf.value || '';
+          }
+        }
+      });
+    }
+
+    toast('✨ AI finished filling item details! Review and click Create Item.', 'success');
+  } catch (e) {
+    toast(`AI Autofill: ${e.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
 }
 
 // ── Location Modal ─────────────────────────────────────────────────────────

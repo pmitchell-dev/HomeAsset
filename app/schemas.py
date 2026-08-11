@@ -195,3 +195,31 @@ class StatsResponse(BaseModel):
     total_locations: int
     total_categories: int
     total_tags: int
+
+
+# ── AI Autofill ───────────────────────────────────────────────────────────────
+
+class ItemAIAutofillRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    location_id: Optional[int] = None
+    category_id: Optional[int] = None
+    serial_number: Optional[str] = None
+    model_number: Optional[str] = None
+    notes: Optional[str] = None
+    tags: List[str] = []
+    custom_fields: List[CustomFieldCreate] = []
+    image_base64: Optional[str] = None
+
+
+class ItemAIAutofillResponse(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    location_id: Optional[int] = None
+    category_id: Optional[int] = None
+    notes: Optional[str] = None
+    serial_number: Optional[str] = None
+    model_number: Optional[str] = None
+    suggested_tags: List[str] = []
+    suggested_custom_fields: List[CustomFieldCreate] = []
+
