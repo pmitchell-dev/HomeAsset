@@ -460,15 +460,12 @@ Return ONLY a JSON object with these exact keys:
 
     gemini_payload = {
         "prompt": user_prompt,
-        "model": "gemini-3.5-flash",
+        "model": "gemini-flash-latest",
         "system_instruction": system_instruction,
     }
 
     if payload.image_base64:
-        img_b64 = payload.image_base64
-        if "," in img_b64:
-            img_b64 = img_b64.split(",", 1)[1]
-        gemini_payload["image_base64"] = img_b64
+        gemini_payload["image_base64"] = payload.image_base64
 
     service_url = "http://192.168.50.217:5050/api/query"
 
