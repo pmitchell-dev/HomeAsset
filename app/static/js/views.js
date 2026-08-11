@@ -811,6 +811,22 @@ async function saveItem(id) {
   } catch(e) { toast(e.message, 'error'); }
 }
 
+async function imageSrcToBase64(url) {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    console.error('Failed to convert image URL to base64:', e);
+    return null;
+  }
+}
+
 async function finishWithAI(editingItemId = null) {
   const btn = document.getElementById('btn-finish-ai');
   if (!btn) return;
@@ -833,6 +849,8 @@ async function finishWithAI(editingItemId = null) {
       if (previewImg && previewImg.src && previewImg.style.display !== 'none') {
         if (previewImg.src.startsWith('data:image')) {
           imageBase64 = previewImg.src;
+        } else if (previewImg.src.includes('/uploads/')) {
+          imageBase64 = await imageSrcToBase64(previewImg.src);
         }
       }
     }

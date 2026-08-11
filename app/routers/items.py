@@ -400,7 +400,8 @@ def ai_autofill_item(payload: ItemAIAutofillRequest, db: Session = Depends(get_d
 
     system_instruction = (
         "You are an intelligent inventory management assistant for HomeAsset. "
-        "Analyze the provided item details (and image if present) to complete missing inventory information. "
+        "Analyze the provided item details (and image if present) to identify items, collections, or assortments, "
+        "and complete missing inventory information. "
         "Respond ONLY with a valid JSON object matching the requested schema."
     )
 
@@ -417,7 +418,7 @@ def ai_autofill_item(payload: ItemAIAutofillRequest, db: Session = Depends(get_d
     }
 
     user_prompt = f"""
-Analyze this item and finish filling in any missing or helpful information.
+Analyze this item image and details, then finish filling in any missing or helpful information.
 
 Current Item Information:
 {json.dumps(existing_info, indent=2)}
@@ -429,18 +430,19 @@ Available System Locations (pick closest location_id if appropriate, or null):
 {json.dumps(locations_list, indent=2)}
 
 IMAGE ATTACHMENT:
-{"An image of the item is attached as base64 below." if payload.image_base64 else "No image attached."}
-{payload.image_base64 or ""}
+{"An image of the item/collection is attached." if payload.image_base64 else "No image attached."}
 
 INSTRUCTIONS:
-1. Provide a clear, accurate, and concise item `name` if currently blank or incomplete.
-2. Provide a detailed `description` explaining what the item is, what it is used for, and key features.
+1. Provide a clear, descriptive, and accurate item `name` (e.g. "Assortment of USB Flash Drives & SD Cards", "DeWalt 20V Cordless Drill", "Box of Mixed Cables").
+   - If the image contains a collection, set, lot, or group of items without a single brand/model, identify the group and name it accordingly (e.g., "Lot of USB Flash Drives and Memory Cards").
+   - NEVER leave `name` as generic words like "Item" or "Unknown" if an image or detail is present.
+2. Provide a detailed `description` explaining what is in the item or collection, what it contains or is used for, and key visible features.
 3. Select the best `category_id` from the list of Available System Categories if possible, or null.
 4. Select the best `location_id` from the list of Available System Locations if possible, or null.
-5. Provide a set of relevant `suggested_tags` (lower-case keywords, e.g. ["tools", "cordless", "dewalt"]).
-6. Provide `notes` if helpful (e.g. usage tips, maintenance suggestions, or missing specs).
-7. Extract or deduce `serial_number` and `model_number` if visible in image or notes.
-8. Provide relevant `suggested_custom_fields` as key-value pairs (e.g. Brand, Color, Power, Warranty, Condition, etc.).
+5. Provide a set of relevant `suggested_tags` (lower-case keywords, e.g. ["usb", "flash-drive", "sd-card", "storage", "tools"]).
+6. Provide `notes` if helpful (e.g. estimated item count, observed brands, condition, or maintenance suggestions).
+7. Extract or deduce `serial_number` and `model_number` if visible in image or notes (or null if not applicable).
+8. Provide relevant `suggested_custom_fields` as key-value pairs (e.g. {"key": "Estimated Item Count", "value": "13"}, {"key": "Item Types", "value": "USB Drives, SD Cards"}).
 
 Return ONLY a JSON object with these exact keys:
 {{
@@ -458,9 +460,15 @@ Return ONLY a JSON object with these exact keys:
 
     gemini_payload = {
         "prompt": user_prompt,
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3.5-flash",
         "system_instruction": system_instruction,
     }
+
+    if payload.image_base64:
+        img_b64 = payload.image_base64
+        if "," in img_b64:
+            img_b64 = img_b64.split(",", 1)[1]
+        gemini_payload["image_base64"] = img_b64
 
     service_url = "http://192.168.50.217:5050/api/query"
 

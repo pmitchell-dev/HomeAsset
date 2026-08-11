@@ -24,7 +24,7 @@ Send an HTTP `POST` request with a JSON body containing the following fields:
 ```json
 {
   "prompt": "What are 3 quick tips for optimizing web performance?",
-  "model": "gemini-2.5-flash",
+  "model": "gemini-3.5-flash",
   "system_instruction": "Respond concisely using markdown bullet points."
 }
 ```
@@ -33,8 +33,8 @@ Send an HTTP `POST` request with a JSON body containing the following fields:
 
 - `prompt` *(Required, string)*: The prompt text or question you want Gemini to analyze/answer.
 - `model` *(Optional, string)*: The Gemini model name.
-  - Default: `"gemini-2.5-flash"`
-  - Options: `"gemini-2.5-flash"`, `"gemini-1.5-flash"`, `"gemini-1.5-pro"`
+  - Default: `"gemini-3.5-flash"`
+  - Options: `"gemini-3.5-flash"`
 - `system_instruction` *(Optional, string)*: Persona or system guidance for Gemini (e.g. `"Act as an expert software engineer"`).
 
 ---
@@ -47,7 +47,7 @@ Send an HTTP `POST` request with a JSON body containing the following fields:
 {
   "status": "success",
   "result": "Here are 3 tips:\n1. Minify CSS/JS assets...\n2. Use WebP images...\n3. Enable caching...",
-  "model": "gemini-2.5-flash"
+  "model": "gemini-3.5-flash"
 }
 ```
 
@@ -71,10 +71,10 @@ Send an HTTP `POST` request with a JSON body containing the following fields:
  * Helper function to query the Webhost Gemini API Service
  * @param {string} promptText - The user prompt to send
  * @param {string} systemInstruction - Optional persona/formatting guidance
- * @param {string} modelName - Optional Gemini model name (default: gemini-2.5-flash)
+ * @param {string} modelName - Optional Gemini model name (default: gemini-3.5-flash)
  * @returns {Promise<string>} The generated response text
  */
-async function askGemini(promptText, systemInstruction = '', modelName = 'gemini-2.5-flash') {
+async function askGemini(promptText, systemInstruction = '', modelName = 'gemini-3.5-flash') {
     const SERVER_URL = 'http://192.168.50.217:5050/api/query';
 
     try {
@@ -121,7 +121,7 @@ curl -X POST http://192.168.50.217:5050/api/query \
      -H "Content-Type: application/json" \
      -d '{
        "prompt": "Hello Gemini, return OK if online.",
-       "model": "gemini-2.5-flash"
+       "model": "gemini-3.5-flash"
      }'
 ```
 
@@ -135,7 +135,7 @@ import requests
 url = "http://192.168.50.217:5050/api/query"
 payload = {
     "prompt": "Explain the concept of API gateways in 3 bullet points.",
-    "model": "gemini-2.5-flash"
+    "model": "gemini-3.5-flash"
 }
 
 response = requests.post(url, json=payload)
