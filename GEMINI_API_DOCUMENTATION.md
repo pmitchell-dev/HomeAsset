@@ -5,7 +5,7 @@ To avoid documentation drift as endpoints, parameters, and default model configu
 Please refer to the canonical original documentation at the following locations:
 
 - 🌐 **GitHub Repository (Primary Source of Truth):**  
-  [https://github.com/pmitchell-dev/pi5-scripts/blob/main/GEMINI_API_DOCUMENTATION.md](https://github.com/pmitchell-dev/pi5-scripts/blob/main/GEMINI_API_DOCUMENTATION.md)
+  [https://github.com/pmitchell-dev/HomeAsset/blob/master/GEMINI_API_DOCUMENTATION.md](https://github.com/pmitchell-dev/HomeAsset/blob/master/GEMINI_API_DOCUMENTATION.md)
 
 - 🖥️ **Webhost Server (`192.168.50.217`):**  
   `/home/pi/pi5-scripts/GEMINI_API_DOCUMENTATION.md`
