@@ -58,6 +58,13 @@
              oninput="onQuickSearch(this.value)" />
     </div>
     <div class="topbar-right">
+      <select id="theme-selector" onchange="changeTheme(this.value)" class="theme-dropdown">
+        <option value="indigo">Indigo (Default)</option>
+        <option value="emerald">Emerald</option>
+        <option value="rose">Rose</option>
+        <option value="amber">Amber</option>
+        <option value="ocean">Ocean</option>
+      </select>
       <button class="btn btn-primary" id="btn-add-item" onclick="openAddItemModal()">+ Add Item</button>
     </div>
   </header>

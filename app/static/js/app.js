@@ -319,8 +319,26 @@ async function renderDashboard() {
     </div>`;
 }
 
+// ── Theme ──────────────────────────────────────────────────────────────────
+function changeTheme(themeName) {
+  if (themeName === 'indigo') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', themeName);
+  }
+  localStorage.setItem('homeasset_theme', themeName);
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem('homeasset_theme') || 'indigo';
+  const select = document.getElementById('theme-selector');
+  if (select) select.value = savedTheme;
+  changeTheme(savedTheme);
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 async function init() {
+  loadTheme();
   await refreshShared();
   loadSidebarTree();
   navigate('dashboard');
