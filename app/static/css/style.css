@@ -35,6 +35,11 @@
 }
 
 :root[data-theme="emerald"] {
+  --bg-base:      #06130d;
+  --bg-surface:   #0a1d15;
+  --bg-card:      #10281e;
+  --bg-elevated:  #173427;
+  --bg-input:     #132e22;
   --primary:      #10b981;
   --primary-h:    #34d399;
   --primary-dim:  rgba(16,185,129,0.15);
@@ -43,6 +48,11 @@
 }
 
 :root[data-theme="rose"] {
+  --bg-base:      #14080a;
+  --bg-surface:   #220d11;
+  --bg-card:      #2c1218;
+  --bg-elevated:  #38181e;
+  --bg-input:     #32151b;
   --primary:      #f43f5e;
   --primary-h:    #fb7185;
   --primary-dim:  rgba(244,63,94,0.15);
@@ -51,6 +61,11 @@
 }
 
 :root[data-theme="amber"] {
+  --bg-base:      #141108;
+  --bg-surface:   #221d0d;
+  --bg-card:      #2c2512;
+  --bg-elevated:  #383018;
+  --bg-input:     #322b15;
   --primary:      #f59e0b;
   --primary-h:    #fbbf24;
   --primary-dim:  rgba(245,158,11,0.15);
@@ -59,6 +74,11 @@
 }
 
 :root[data-theme="ocean"] {
+  --bg-base:      #050e14;
+  --bg-surface:   #081722;
+  --bg-card:      #0d202c;
+  --bg-elevated:  #122a38;
+  --bg-input:     #102532;
   --primary:      #0ea5e9;
   --primary-h:    #38bdf8;
   --primary-dim:  rgba(14,165,233,0.15);
