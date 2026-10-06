@@ -97,6 +97,14 @@ app.mount("/static",    StaticFiles(directory="app/static"),      name="static")
 # ── 3. SPA catch-all LAST ─────────────────────────────────────────────────────
 from fastapi import HTTPException  # noqa
 
+@app.get("/sw.js")
+def serve_sw():
+    return FileResponse("app/static/sw.js", media_type="application/javascript")
+
+@app.get("/manifest.json")
+def serve_manifest():
+    return FileResponse("app/static/manifest.json", media_type="application/manifest+json")
+
 @app.get("/{full_path:path}")
 def serve_spa(full_path: str):
     # Never serve the SPA for API paths — return a proper 404 instead

@@ -8,6 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/style.css" />
+  <!-- PWA Requirements -->
+  <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+  <meta name="theme-color" content="#6366f1" />
+  <link rel="apple-touch-icon" href="/static/img/logo.png">
 </head>
 <body>
 
@@ -86,5 +90,14 @@
 
 <script src="/static/js/app.js?v=2"></script>
 <script src="/static/js/views.js?v=2"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => {
+        console.log('SW registration failed: ', err);
+      });
+    });
+  }
+</script>
 </body>
 </html>
